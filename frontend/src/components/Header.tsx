@@ -19,24 +19,30 @@ export const Header = () => {
 
   return (
     <header className="border-b bg-card shadow-sm">
-      <div className="container mx-auto px-4 py-2">
+      <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-          <div className="flex h-15 w-12 items-center justify-center bg-primary/10 p-1 rounded-lg ">
-            <img src="/cropped-log1o.png" alt="Logo" className="" />
-          </div>
+           <div className="relative h-16 w-16 shrink-0 rounded-full bg-primary/10 p-1 ">
+      <img
+        src="/cropped-log1o.png"
+        alt="شعار مركز تطوير البلديات ودعم اللامركزية"
+        className="h-full w-full object-contain"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
           <div>
             <h1 className="text-xl font-bold text-foreground">
-       مركز تطوير البلديات و دعم اللامركزية
+              مركز دعم التنمية البلدية واللامركزية
             </h1>
-            <p className="text-sm text-muted-foreground">نظام أرشفة النماذج التدريبية </p>
+            <p className="text-sm text-muted-foreground">نظام إدارة الدورات التدريبية</p>
           </div>
           </div>
-          <div className="flex  gap-2">
-            <Button className="bg-primary/10" variant="outline" size="icon" onClick={() => navigate("/settings")} title="الإعدادات">
+          <div className="flex gap-2">
+            <Button variant="outline" size="icon" onClick={() => navigate("/settings")} title="الإعدادات">
               <Settings className="h-4 w-4" />
             </Button>
-            <Button className="bg-primary/10" variant="outline" size="icon" onClick={handleLogout} title="تسجيل الخروج">
+            <Button variant="outline" size="icon" onClick={handleLogout} title="تسجيل الخروج">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>

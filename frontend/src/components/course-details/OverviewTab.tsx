@@ -8,10 +8,11 @@ interface OverviewTabProps {
 
 export const OverviewTab = ({ course }: OverviewTabProps) => {
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ar-EG', {
+    return new Date(dateString).toLocaleDateString("en-GB", {
       year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      month: 'numeric',
+      day: 'numeric',
+
     });
   };
 
@@ -138,19 +139,7 @@ export const OverviewTab = ({ course }: OverviewTabProps) => {
             </Card>
           </div>
 
-          <Card className="p-6">
-            <h4 className="mb-4 text-base font-semibold text-foreground">معدل الإكمال</h4>
-            <div className="mb-2 flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">التقدم</span>
-              <span className="font-semibold text-primary">{completionRate}%</span>
-            </div>
-            <div className="h-3 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full bg-gradient-to-r from-primary to-secondary transition-all"
-                style={{ width: `${completionRate}%` }}
-              />
-            </div>
-          </Card>
+         
         </div>
       </div>
     </div>

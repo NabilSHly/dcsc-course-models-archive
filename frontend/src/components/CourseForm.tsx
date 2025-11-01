@@ -9,7 +9,7 @@ import { Textarea } from "./ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Card } from "./ui/card";
-import { FileText } from "lucide-react";
+import { FileText, Image as ImageIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Course } from "@/lib/mockData";
 import { getCourseFields } from "@/lib/courseFields";
@@ -41,12 +41,13 @@ export const CourseForm = ({ course }: CourseFormProps) => {
   const navigate = useNavigate();
   const courseFields = getCourseFields();
   const [documents, setDocuments] = useState<{
-    traineesDataForm?: File;
-    trainerDataForm?: File;
-    attendanceForm?: File;
-    generalReportForm?: File;
-    courseCertificate?: File;
+    traineesDataForm?: File[];
+    trainerDataForm?: File[];
+    attendanceForm?: File[];
+    generalReportForm?: File[];
+    courseCertificate?: File[];
   }>({});
+  const [images, setImages] = useState<File[]>([]);
 
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
@@ -83,16 +84,38 @@ export const CourseForm = ({ course }: CourseFormProps) => {
     },
   });
 
-  const handleFileChange = (type: keyof typeof documents, file: File | undefined) => {
+  const handleFileChange = (type: keyof typeof documents, files: FileList | null) => {
+    if (files) {
+      const fileArray = Array.from(files);
+      setDocuments(prev => ({
+        ...prev,
+        [type]: [...(prev[type] || []), ...fileArray]
+      }));
+    }
+  };
+
+  const removeDocument = (type: keyof typeof documents, index: number) => {
     setDocuments(prev => ({
       ...prev,
-      [type]: file
+      [type]: prev[type]?.filter((_, i) => i !== index)
     }));
+  };
+
+  const handleImageChange = (files: FileList | null) => {
+    if (files) {
+      const fileArray = Array.from(files);
+      setImages(prev => [...prev, ...fileArray]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const onSubmit = (data: CourseFormValues) => {
     console.log(data);
     console.log('Documents:', documents);
+    console.log('Images:', images);
     toast.success(course ? "تم تحديث الدورة بنجاح" : "تم إنشاء الدورة بنجاح");
     navigate("/");
   };
@@ -315,108 +338,101 @@ export const CourseForm = ({ course }: CourseFormProps) => {
 
         <Card className="p-6">
           <div className="mb-4 flex items-center gap-2">
+            <ImageIcon className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold text-foreground">صور الدورة</h3>
+          </div>
+          <p className="mb-6 text-sm text-muted-foreground">
+            تحميل صور الدورة (يمكنك تحميل عدة صور)
+          </p>
+
+          <div className="space-y-4">
+            <Input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => handleImageChange(e.target.files)}
+              className="cursor-pointer"
+            />
+            
+            {images.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {images.map((image, index) => (
+                  <div key={index} className="relative group">
+                    <div className="aspect-video rounded-lg bg-muted overflow-hidden">
+                      <img 
+                        src={URL.createObjectURL(image)} 
+                        alt={`صورة ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 left-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => removeImage(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-1 truncate">{image.name}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-semibold text-foreground">مستندات الدورة</h3>
           </div>
           <p className="mb-6 text-sm text-muted-foreground">
-            تحميل المستندات الرسمية للدورة (ملفات PDF موصى بها)
+            تحميل المستندات الرسمية للدورة (يمكنك تحميل عدة ملفات لكل نوع)
           </p>
 
-          <div className="space-y-4">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">
-                نموذج بيانات المتدربين
-              </label>
-              <div className="flex items-center gap-3">
+          <div className="space-y-6">
+            {[
+              { key: 'traineesDataForm', label: 'نموذج بيانات المتدربين' },
+              { key: 'trainerDataForm', label: 'نموذج بيانات المدرب' },
+              { key: 'attendanceForm', label: 'نموذج الحضور' },
+              { key: 'generalReportForm', label: 'نموذج التقرير العام' },
+              { key: 'courseCertificate', label: 'شهادة الدورة' }
+            ].map(({ key, label }) => (
+              <div key={key}>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  {label}
+                </label>
                 <Input
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  onChange={(e) => handleFileChange('traineesDataForm', e.target.files?.[0])}
-                  className="flex-1"
+                  multiple
+                  onChange={(e) => handleFileChange(key as keyof typeof documents, e.target.files)}
+                  className="cursor-pointer mb-2"
                 />
-                {documents.traineesDataForm && (
-                  <span className="text-sm text-muted-foreground">
-                    {documents.traineesDataForm.name}
-                  </span>
+                {documents[key as keyof typeof documents] && documents[key as keyof typeof documents]!.length > 0 && (
+                  <div className="space-y-2 mt-3">
+                    {documents[key as keyof typeof documents]!.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+                          <span className="text-sm text-foreground truncate">{file.name}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 flex-shrink-0"
+                          onClick={() => removeDocument(key as keyof typeof documents, index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">
-                نموذج بيانات المدرب
-              </label>
-              <div className="flex items-center gap-3">
-                <Input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={(e) => handleFileChange('trainerDataForm', e.target.files?.[0])}
-                  className="flex-1"
-                />
-                {documents.trainerDataForm && (
-                  <span className="text-sm text-muted-foreground">
-                    {documents.trainerDataForm.name}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">
-                نموذج الحضور
-              </label>
-              <div className="flex items-center gap-3">
-                <Input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={(e) => handleFileChange('attendanceForm', e.target.files?.[0])}
-                  className="flex-1"
-                />
-                {documents.attendanceForm && (
-                  <span className="text-sm text-muted-foreground">
-                    {documents.attendanceForm.name}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">
-                نموذج التقرير العام
-              </label>
-              <div className="flex items-center gap-3">
-                <Input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={(e) => handleFileChange('generalReportForm', e.target.files?.[0])}
-                  className="flex-1"
-                />
-                {documents.generalReportForm && (
-                  <span className="text-sm text-muted-foreground">
-                    {documents.generalReportForm.name}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">
-                شهادة الدورة
-              </label>
-              <div className="flex items-center gap-3">
-                <Input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={(e) => handleFileChange('courseCertificate', e.target.files?.[0])}
-                  className="flex-1"
-                />
-                {documents.courseCertificate && (
-                  <span className="text-sm text-muted-foreground">
-                    {documents.courseCertificate.name}
-                  </span>
-                )}
-              </div>
-            </div>
+            ))}
           </div>
         </Card>
 

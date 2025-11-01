@@ -13,9 +13,9 @@ export const CourseTable = ({ courses }: CourseTableProps) => {
   const navigate = useNavigate();
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ar-EG', {
+    return new Date(dateString).toLocaleDateString('en-GB', {
       year: 'numeric',
-      month: 'short',
+      month: 'numeric',
       day: 'numeric'
     });
   };
