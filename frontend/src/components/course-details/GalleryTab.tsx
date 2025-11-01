@@ -18,7 +18,7 @@ export const GalleryTab = ({ course }: GalleryTabProps) => {
             <Card key={image.id} className="overflow-hidden">
               <img
                 src={image.url}
-                alt={image.altText || "صورة الدورة"}
+                alt={image.altText || "صورة الدورة التدريبية"}
                 className="h-64 w-full object-cover transition-transform hover:scale-105"
               />
               {image.altText && (

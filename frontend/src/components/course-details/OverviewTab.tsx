@@ -22,10 +22,10 @@ export const OverviewTab = ({ course }: OverviewTabProps) => {
     <div className="space-y-6 pt-6">
       {/* Course Information Section */}
       <div>
-        <h3 className="mb-4 text-lg font-semibold text-foreground">معلومات الدورة</h3>
+        <h3 className="mb-4 text-lg font-semibold text-foreground">معلومات الدورة التدريبية</h3>
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">كود الدورة</label>
+            <label className="text-sm font-medium text-muted-foreground">كود الدورة التدريبية</label>
             <div className="flex items-center gap-2 text-foreground">
               <Code className="h-4 w-4 text-primary" />
               <span className="font-mono">{course.courseCode}</span>
@@ -120,7 +120,7 @@ export const OverviewTab = ({ course }: OverviewTabProps) => {
                   <Users className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">إجمالي المستفيدين</p>
+                  <p className="text-sm font-medium text-muted-foreground">إجمالي المستهدفين</p>
                   <p className="text-3xl font-bold text-foreground">{course.numberOfBeneficiaries}</p>
                 </div>
               </div>

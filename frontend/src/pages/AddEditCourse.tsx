@@ -22,7 +22,7 @@ const AddEditCourse = () => {
 
       <Card className="p-6">
         <h1 className="mb-6 text-3xl font-bold text-foreground">
-          {isEdit ? "تعديل الدورة" : "إضافة دورة جديدة"}
+          {isEdit ? "تعديل الدورة التدريبية" : "إضافة دورة جديدة"}
         </h1>
         <CourseForm course={course} />
       </Card>

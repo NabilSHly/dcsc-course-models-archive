@@ -25,8 +25,8 @@ export const CourseTable = ({ courses }: CourseTableProps) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>رقم الدورة</TableHead>
-            <TableHead>اسم الدورة</TableHead>
+            <TableHead>رقم الدورة التدريبية</TableHead>
+            <TableHead>اسم الدورة التدريبية</TableHead>
             <TableHead>المجال</TableHead>
             <TableHead>المدرب</TableHead>
             <TableHead>تاريخ البدء</TableHead>

@@ -15,10 +15,10 @@ import type { Course } from "@/lib/mockData";
 import { getCourseFields } from "@/lib/courseFields";
 
 const courseSchema = z.object({
-  courseNumber: z.string().min(1, "رقم الدورة مطلوب").max(32),
-  courseCode: z.string().min(1, "كود الدورة مطلوب").max(32),
-  courseField: z.string().min(1, "مجال الدورة مطلوب").max(64),
-  courseName: z.string().min(1, "اسم الدورة مطلوب").max(128),
+  courseNumber: z.string().min(1, "رقم الدورة التدريبية مطلوب").max(32),
+  courseCode: z.string().min(1, "كود الدورة التدريبية مطلوب").max(32),
+  courseField: z.string().min(1, "مجال الدورة التدريبية مطلوب").max(64),
+  courseName: z.string().min(1, "اسم الدورة التدريبية مطلوب").max(128),
   numberOfBeneficiaries: z.coerce.number().min(1, "يجب أن يكون على الأقل 1"),
   numberOfGraduates: z.coerce.number().min(0, "لا يمكن أن يكون سالباً"),
   courseDuration: z.coerce.number().min(1, "يجب أن يكون يوم واحد على الأقل"),
@@ -116,7 +116,7 @@ export const CourseForm = ({ course }: CourseFormProps) => {
     console.log(data);
     console.log('Documents:', documents);
     console.log('Images:', images);
-    toast.success(course ? "تم تحديث الدورة بنجاح" : "تم إنشاء الدورة بنجاح");
+    toast.success(course ? "تم تحديث الدورة التدريبية بنجاح" : "تم إنشاء الدورة التدريبية بنجاح");
     navigate("/");
   };
 
@@ -129,7 +129,7 @@ export const CourseForm = ({ course }: CourseFormProps) => {
             name="courseNumber"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>رقم الدورة *</FormLabel>
+                <FormLabel>رقم الدورة التدريبية *</FormLabel>
                 <FormControl>
                   <Input placeholder="مثال: MDC-2024-001" {...field} />
                 </FormControl>
@@ -143,7 +143,7 @@ export const CourseForm = ({ course }: CourseFormProps) => {
             name="courseCode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>كود الدورة *</FormLabel>
+                <FormLabel>كود الدورة التدريبية *</FormLabel>
                 <FormControl>
                   <Input placeholder="مثال: GOV-ADM-101" {...field} />
                 </FormControl>
@@ -182,9 +182,9 @@ export const CourseForm = ({ course }: CourseFormProps) => {
             name="courseName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>اسم الدورة *</FormLabel>
+                <FormLabel>اسم الدورة التدريبية *</FormLabel>
                 <FormControl>
-                  <Input placeholder="أدخل اسم الدورة" {...field} />
+                  <Input placeholder="أدخل اسم الدورة التدريبية" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -266,7 +266,7 @@ export const CourseForm = ({ course }: CourseFormProps) => {
             name="numberOfBeneficiaries"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>عدد المستفيدين *</FormLabel>
+                <FormLabel>عدد المستهدفين *</FormLabel>
                 <FormControl>
                   <Input type="number" min="1" {...field} />
                 </FormControl>
@@ -296,7 +296,7 @@ export const CourseForm = ({ course }: CourseFormProps) => {
               <FormItem>
                 <FormLabel>اسم المدرب *</FormLabel>
                 <FormControl>
-                  <Input placeholder="مثال: د. أحمد حسن" {...field} />
+                  <Input placeholder="" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -308,9 +308,9 @@ export const CourseForm = ({ course }: CourseFormProps) => {
             name="trainerPhoneNumber"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>هاتف المدرب *</FormLabel>
+                <FormLabel>رقم هاتف المدرب *</FormLabel>
                 <FormControl>
-                  <Input placeholder="مثال: 100 123 4567 20+" {...field} />
+                  <Input  {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -327,7 +327,7 @@ export const CourseForm = ({ course }: CourseFormProps) => {
               <FormControl>
                 <Textarea
                   placeholder="أضف أي ملاحظات أو ملاحظات إضافية..."
-                  className="min-h-[120px]"
+                  className="min-h-[64px]"
                   {...field}
                 />
               </FormControl>
@@ -339,10 +339,10 @@ export const CourseForm = ({ course }: CourseFormProps) => {
         <Card className="p-6">
           <div className="mb-4 flex items-center gap-2">
             <ImageIcon className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold text-foreground">صور الدورة</h3>
+            <h3 className="text-lg font-semibold text-foreground">صور الدورة التدريبية</h3>
           </div>
           <p className="mb-6 text-sm text-muted-foreground">
-            تحميل صور الدورة (يمكنك تحميل عدة صور)
+            تحميل صور الدورة التدريبية (يمكنك تحميل عدة صور)
           </p>
 
           <div className="space-y-4">
@@ -385,7 +385,7 @@ export const CourseForm = ({ course }: CourseFormProps) => {
         <Card className="p-6">
           <div className="mb-4 flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold text-foreground">مستندات الدورة</h3>
+            <h3 className="text-lg font-semibold text-foreground">مستندات الدورة التدريبية</h3>
           </div>
           <p className="mb-6 text-sm text-muted-foreground">
             تحميل المستندات الرسمية للدورة (يمكنك تحميل عدة ملفات لكل نوع)
@@ -397,7 +397,7 @@ export const CourseForm = ({ course }: CourseFormProps) => {
               { key: 'trainerDataForm', label: 'نموذج بيانات المدرب' },
               { key: 'attendanceForm', label: 'نموذج الحضور' },
               { key: 'generalReportForm', label: 'نموذج التقرير العام' },
-              { key: 'courseCertificate', label: 'شهادة الدورة' }
+              { key: 'courseCertificate', label: 'شهادة الدورة التدريبية' }
             ].map(({ key, label }) => (
               <div key={key}>
                 <label className="mb-2 block text-sm font-medium text-foreground">
@@ -438,7 +438,7 @@ export const CourseForm = ({ course }: CourseFormProps) => {
 
         <div className="flex gap-4">
           <Button type="submit" size="lg">
-            {course ? "تحديث الدورة" : "إنشاء الدورة"}
+            {course ? "تحديث الدورة التدريبية" : "إنشاء الدورة التدريبية"}
           </Button>
           <Button type="button" variant="outline" size="lg" onClick={() => navigate("/")}>
             إلغاء

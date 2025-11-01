@@ -6,7 +6,7 @@ export interface CourseField {
 }
 
 export const getDefaultCourseFields = (): CourseField[] => [
-  { id: 1, name: "الحوكمة البلدية" },
+  { id: 1, name: " البلدية" },
   { id: 2, name: "الإدارة المالية" },
   { id: 3, name: "اللامركزية" },
 ];

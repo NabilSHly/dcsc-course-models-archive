@@ -18,7 +18,7 @@ const CourseDetails = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card className="p-8 text-center">
-          <p className="text-muted-foreground">لم يتم العثور على الدورة</p>
+          <p className="text-muted-foreground">لم يتم العثور على الدورة التدريبية</p>
           <Button onClick={() => navigate("/")} className="mt-4">
             العودة إلى لوحة التحكم
           </Button>
@@ -28,7 +28,7 @@ const CourseDetails = () => {
   }
 
   const handleDelete = () => {
-    toast.success("تم حذف الدورة بنجاح");
+    toast.success("تم حذف الدورة التدريبية بنجاح");
     navigate("/");
   };
 
@@ -54,7 +54,7 @@ const CourseDetails = () => {
       <Card className="p-6">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-foreground">{course.courseName}</h1>
-          <p className="text-muted-foreground">رقم الدورة: {course.courseNumber}</p>
+          <p className="text-muted-foreground">رقم الدورة التدريبية: {course.courseNumber}</p>
         </div>
 
         <Tabs defaultValue="overview" className="w-full">

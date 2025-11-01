@@ -117,7 +117,7 @@ export const getDocumentTypeName = (type: string): string => {
     TRAINER_DATA_FORM: "نموذج بيانات المدرب",
     ATTENDANCE_FORM: "نموذج الحضور",
     GENERAL_REPORT_FORM: "التقرير العام",
-    COURSE_CERTIFICATE: "شهادة الدورة"
+    COURSE_CERTIFICATE: "شهادة الدورة التدريبية"
   };
   return names[type] || type;
 };
