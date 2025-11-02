@@ -40,9 +40,7 @@ router.get('/dashboard', authMiddleware, async (req, res) => {
         }
       },
       orderBy: {
-        courses: {
-          _count: 'desc'
-        }
+        name: 'asc'
       }
     });
 
@@ -52,36 +50,46 @@ router.get('/dashboard', authMiddleware, async (req, res) => {
       orderBy: {
         courseStartDate: 'desc'
       },
-      select: {
-        id: true,
-        courseNumber: true,
-        courseName: true,
+      include: {
         courseField: {
           select: {
             id: true,
             name: true
           }
-        },
+        }
+      }
+    });
+
+    // Get courses by month (last 6 months) - SQLite compatible
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const allCourses = await prisma.course.findMany({
+      where: {
+        courseStartDate: {
+          gte: sixMonthsAgo
+        }
+      },
+      select: {
         courseStartDate: true,
-        courseEndDate: true,
         numberOfGraduates: true
       }
     });
 
-    // Get courses by month (last 6 months)
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    // Group by month in JavaScript
+    const coursesByMonth = allCourses.reduce((acc, course) => {
+      const month = course.courseStartDate.toISOString().substring(0, 7); // YYYY-MM
+      if (!acc[month]) {
+        acc[month] = { month, count: 0, graduates: 0 };
+      }
+      acc[month].count += 1;
+      acc[month].graduates += course.numberOfGraduates;
+      return acc;
+    }, {});
 
-    const coursesByMonth = await prisma.$queryRaw`
-      SELECT 
-        TO_CHAR("courseStartDate", 'YYYY-MM') as month,
-        COUNT(*) as count,
-        SUM("numberOfGraduates") as graduates
-      FROM "Course"
-      WHERE "courseStartDate" >= ${sixMonthsAgo}
-      GROUP BY TO_CHAR("courseStartDate", 'YYYY-MM')
-      ORDER BY month DESC
-    `;
+    const monthlyData = Object.values(coursesByMonth).sort((a, b) => 
+      b.month.localeCompare(a.month)
+    );
 
     res.json({
       success: true,
@@ -98,7 +106,7 @@ router.get('/dashboard', authMiddleware, async (req, res) => {
           count: item._count.courses
         })),
         recentCourses,
-        coursesByMonth
+        coursesByMonth: monthlyData
       }
     });
 
@@ -128,9 +136,7 @@ router.get('/fields', authMiddleware, async (req, res) => {
         }
       },
       orderBy: {
-        courses: {
-          _count: 'desc'
-        }
+        name: 'asc'
       }
     });
 
@@ -158,31 +164,40 @@ router.get('/fields', authMiddleware, async (req, res) => {
 // Get trainer statistics
 router.get('/trainers', authMiddleware, async (req, res) => {
   try {
-    const trainerStats = await prisma.course.groupBy({
-      by: ['trainerName', 'trainerPhoneNumber'],
-      _count: {
-        trainerName: true
-      },
-      _sum: {
+    const allCourses = await prisma.course.findMany({
+      select: {
+        trainerName: true,
+        trainerPhoneNumber: true,
         numberOfGraduates: true,
         courseHours: true
-      },
-      orderBy: {
-        _count: {
-          trainerName: 'desc'
-        }
       }
     });
 
+    // Group by trainer in JavaScript
+    const trainerStats = allCourses.reduce((acc, course) => {
+      const key = `${course.trainerName}|${course.trainerPhoneNumber}`;
+      if (!acc[key]) {
+        acc[key] = {
+          name: course.trainerName,
+          phone: course.trainerPhoneNumber,
+          totalCourses: 0,
+          totalGraduates: 0,
+          totalHours: 0
+        };
+      }
+      acc[key].totalCourses += 1;
+      acc[key].totalGraduates += course.numberOfGraduates;
+      acc[key].totalHours += course.courseHours;
+      return acc;
+    }, {});
+
+    const data = Object.values(trainerStats).sort((a, b) => 
+      b.totalCourses - a.totalCourses
+    );
+
     res.json({
       success: true,
-      data: trainerStats.map(item => ({
-        name: item.trainerName,
-        phone: item.trainerPhoneNumber,
-        totalCourses: item._count.trainerName,
-        totalGraduates: item._sum.numberOfGraduates || 0,
-        totalHours: item._sum.courseHours || 0
-      }))
+      data
     });
 
   } catch (error) {
@@ -197,9 +212,9 @@ router.get('/trainers', authMiddleware, async (req, res) => {
 // Get yearly statistics
 router.get('/yearly/:year?', authMiddleware, async (req, res) => {
   try {
-    const year = req.params.year || new Date().getFullYear();
-    const startDate = new Date(`${year}-01-01`);
-    const endDate = new Date(`${year}-12-31`);
+    const year = parseInt(req.params.year) || new Date().getFullYear();
+    const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+    const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
 
     const yearlyStats = await prisma.course.aggregate({
       where: {
@@ -218,29 +233,48 @@ router.get('/yearly/:year?', authMiddleware, async (req, res) => {
       }
     });
 
-    const monthlyBreakdown = await prisma.$queryRaw`
-      SELECT 
-        EXTRACT(MONTH FROM "courseStartDate") as month,
-        COUNT(*) as courses,
-        SUM("numberOfGraduates") as graduates,
-        SUM("courseHours") as hours
-      FROM "Course"
-      WHERE "courseStartDate" >= ${startDate} AND "courseStartDate" <= ${endDate}
-      GROUP BY EXTRACT(MONTH FROM "courseStartDate")
-      ORDER BY month
-    `;
+    // Get monthly breakdown
+    const yearCourses = await prisma.course.findMany({
+      where: {
+        courseStartDate: {
+          gte: startDate,
+          lte: endDate
+        }
+      },
+      select: {
+        courseStartDate: true,
+        numberOfGraduates: true,
+        courseHours: true
+      }
+    });
+
+    // Group by month
+    const monthlyBreakdown = yearCourses.reduce((acc, course) => {
+      const month = course.courseStartDate.getMonth() + 1;
+      if (!acc[month]) {
+        acc[month] = { month, courses: 0, graduates: 0, hours: 0 };
+      }
+      acc[month].courses += 1;
+      acc[month].graduates += course.numberOfGraduates;
+      acc[month].hours += course.courseHours;
+      return acc;
+    }, {});
+
+    const monthlyData = Object.values(monthlyBreakdown).sort((a, b) => 
+      a.month - b.month
+    );
 
     res.json({
       success: true,
       data: {
-        year: parseInt(year),
+        year,
         overview: {
           totalCourses: yearlyStats._count.id,
           totalGraduates: yearlyStats._sum.numberOfGraduates || 0,
           totalBeneficiaries: yearlyStats._sum.numberOfBeneficiaries || 0,
           totalHours: yearlyStats._sum.courseHours || 0
         },
-        monthlyBreakdown
+        monthlyBreakdown: monthlyData
       }
     });
 

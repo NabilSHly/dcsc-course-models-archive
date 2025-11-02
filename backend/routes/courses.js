@@ -1,38 +1,47 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
-const authMiddleware = require('../middleware/auth');
-const { uploadImage, uploadDocument } = require('../middleware/upload');
-const { body, validationResult } = require('express-validator');
-const fs = require('fs');
-const path = require('path');
+const { PrismaClient } = require("@prisma/client");
+const authMiddleware = require("../middleware/auth");
+const { uploadImage, uploadDocument } = require("../middleware/upload");
+const { body, validationResult } = require("express-validator");
+const fs = require("fs");
+const path = require("path");
 
 const prisma = new PrismaClient();
+const UPLOADS_ROOT = path.join(__dirname, '..', 'storage', 'uploads');
+const urlToDiskPath = (p) => path.join(UPLOADS_ROOT, String(p).replace(/^\/?uploads\//, ''));
 
 // Get all courses with pagination and search
-router.get('/', authMiddleware, async (req, res) => {
+router.get("/", authMiddleware, async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = '', field = '', startDate = '', endDate = '' } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      field = "",
+      startDate = "",
+      endDate = "",
+    } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
+
     const where = {};
-    
+
     if (search) {
       where.OR = [
-        { courseNumber: { contains: search, mode: 'insensitive' } },
-        { courseName: { contains: search, mode: 'insensitive' } },
-        { trainerName: { contains: search, mode: 'insensitive' } }
+        { courseNumber: { contains: search, mode: "insensitive" } },
+        { courseName: { contains: search, mode: "insensitive" } },
+        { trainerName: { contains: search, mode: "insensitive" } },
       ];
     }
-    
+
     if (field) {
       where.courseFieldId = parseInt(field);
     }
-    
+
     if (startDate) {
       where.courseStartDate = { gte: new Date(startDate) };
     }
-    
+
     if (endDate) {
       where.courseEndDate = { lte: new Date(endDate) };
     }
@@ -42,14 +51,14 @@ router.get('/', authMiddleware, async (req, res) => {
         where,
         skip,
         take: parseInt(limit),
-        orderBy: { courseStartDate: 'desc' },
+        orderBy: { courseStartDate: "desc" },
         include: {
           courseField: true,
           images: true,
-          documents: true
-        }
+          documents: true,
+        },
       }),
-      prisma.course.count({ where })
+      prisma.course.count({ where }),
     ]);
 
     res.json({
@@ -59,69 +68,78 @@ router.get('/', authMiddleware, async (req, res) => {
         total,
         page: parseInt(page),
         limit: parseInt(limit),
-        totalPages: Math.ceil(total / parseInt(limit))
-      }
+        totalPages: Math.ceil(total / parseInt(limit)),
+      },
     });
-
   } catch (error) {
-    console.error('Get courses error:', error);
+    console.error("Get courses error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching courses'
+      message: "Error fetching courses",
     });
   }
 });
 
 // Get single course by ID
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get("/:id", authMiddleware, async (req, res) => {
   try {
     const course = await prisma.course.findUnique({
       where: { id: parseInt(req.params.id) },
       include: {
         courseField: true,
         images: true,
-        documents: true
-      }
+        documents: true,
+      },
     });
 
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found'
+        message: "Course not found",
       });
     }
 
     res.json({
       success: true,
-      data: course
+      data: course,
     });
-
   } catch (error) {
-    console.error('Get course error:', error);
+    console.error("Get course error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching course'
+      message: "Error fetching course",
     });
   }
 });
 
 // Create new course
-router.post('/',
+router.post(
+  "/",
   authMiddleware,
   [
-    body('courseNumber').notEmpty().withMessage('Course number is required'),
-    body('courseCode').notEmpty().withMessage('Course code is required'),
-    body('courseFieldId').isInt({ min: 1 }).withMessage('Valid course field ID is required'),
-    body('courseName').notEmpty().withMessage('Course name is required'),
-    body('numberOfBeneficiaries').isInt({ min: 0 }).withMessage('Invalid number of beneficiaries'),
-    body('numberOfGraduates').isInt({ min: 0 }).withMessage('Invalid number of graduates'),
-    body('courseDuration').isInt({ min: 1 }).withMessage('Invalid course duration'),
-    body('courseHours').isInt({ min: 1 }).withMessage('Invalid course hours'),
-    body('courseVenue').notEmpty().withMessage('Course venue is required'),
-    body('courseStartDate').isISO8601().withMessage('Invalid start date'),
-    body('courseEndDate').isISO8601().withMessage('Invalid end date'),
-    body('trainerName').notEmpty().withMessage('Trainer name is required'),
-    body('trainerPhoneNumber').notEmpty().withMessage('Trainer phone is required')
+    body("courseNumber").notEmpty().withMessage("Course number is required"),
+    body("courseCode").notEmpty().withMessage("Course code is required"),
+    body("courseFieldId")
+      .isInt({ min: 1 })
+      .withMessage("Valid course field ID is required"),
+    body("courseName").notEmpty().withMessage("Course name is required"),
+    body("numberOfBeneficiaries")
+      .isInt({ min: 0 })
+      .withMessage("Invalid number of beneficiaries"),
+    body("numberOfGraduates")
+      .isInt({ min: 0 })
+      .withMessage("Invalid number of graduates"),
+    body("courseDuration")
+      .isInt({ min: 1 })
+      .withMessage("Invalid course duration"),
+    body("courseHours").isInt({ min: 1 }).withMessage("Invalid course hours"),
+    body("courseVenue").notEmpty().withMessage("Course venue is required"),
+    body("courseStartDate").isISO8601().withMessage("Invalid start date"),
+    body("courseEndDate").isISO8601().withMessage("Invalid end date"),
+    body("trainerName").notEmpty().withMessage("Trainer name is required"),
+    body("trainerPhoneNumber")
+      .notEmpty()
+      .withMessage("Trainer phone is required"),
   ],
   async (req, res) => {
     try {
@@ -129,7 +147,7 @@ router.post('/',
       if (!errors.isEmpty()) {
         return res.status(400).json({
           success: false,
-          errors: errors.array()
+          errors: errors.array(),
         });
       }
 
@@ -137,13 +155,13 @@ router.post('/',
 
       // Verify course field exists
       const fieldExists = await prisma.courseField.findUnique({
-        where: { id: parseInt(courseFieldId) }
+        where: { id: parseInt(courseFieldId) },
       });
 
       if (!fieldExists) {
         return res.status(400).json({
           success: false,
-          message: 'Invalid course field ID. Field does not exist.'
+          message: "Invalid course field ID. Field does not exist.",
         });
       }
 
@@ -156,56 +174,59 @@ router.post('/',
           numberOfBeneficiaries: parseInt(restData.numberOfBeneficiaries),
           numberOfGraduates: parseInt(restData.numberOfGraduates),
           courseDuration: parseInt(restData.courseDuration),
-          courseHours: parseInt(restData.courseHours)
+          courseHours: parseInt(restData.courseHours),
         },
         include: {
           courseField: true,
           images: true,
-          documents: true
-        }
+          documents: true,
+        },
       });
 
       res.status(201).json({
         success: true,
-        message: 'Course created successfully',
-        data: course
+        message: "Course created successfully",
+        data: course,
       });
-
     } catch (error) {
-      console.error('Create course error:', error);
-      
-      if (error.code === 'P2002') {
+      console.error("Create course error:", error);
+
+      if (error.code === "P2002") {
         return res.status(400).json({
           success: false,
-          message: 'Course number already exists'
+          message: "Course number already exists",
         });
       }
-      
+
       res.status(500).json({
         success: false,
-        message: 'Error creating course'
+        message: "Error creating course",
       });
     }
   }
 );
 
 // Update course
-router.put('/:id',
+router.put(
+  "/:id",
   authMiddleware,
   [
-    body('courseNumber').optional().notEmpty(),
-    body('courseCode').optional().notEmpty(),
-    body('courseFieldId').optional().isInt({ min: 1 }).withMessage('Valid course field ID is required'),
-    body('courseName').optional().notEmpty(),
-    body('numberOfBeneficiaries').optional().isInt({ min: 0 }),
-    body('numberOfGraduates').optional().isInt({ min: 0 }),
-    body('courseDuration').optional().isInt({ min: 1 }),
-    body('courseHours').optional().isInt({ min: 1 }),
-    body('courseVenue').optional().notEmpty(),
-    body('courseStartDate').optional().isISO8601(),
-    body('courseEndDate').optional().isISO8601(),
-    body('trainerName').optional().notEmpty(),
-    body('trainerPhoneNumber').optional().notEmpty()
+    body("courseNumber").optional().notEmpty(),
+    body("courseCode").optional().notEmpty(),
+    body("courseFieldId")
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage("Valid course field ID is required"),
+    body("courseName").optional().notEmpty(),
+    body("numberOfBeneficiaries").optional().isInt({ min: 0 }),
+    body("numberOfGraduates").optional().isInt({ min: 0 }),
+    body("courseDuration").optional().isInt({ min: 1 }),
+    body("courseHours").optional().isInt({ min: 1 }),
+    body("courseVenue").optional().notEmpty(),
+    body("courseStartDate").optional().isISO8601(),
+    body("courseEndDate").optional().isISO8601(),
+    body("trainerName").optional().notEmpty(),
+    body("trainerPhoneNumber").optional().notEmpty(),
   ],
   async (req, res) => {
     try {
@@ -213,47 +234,49 @@ router.put('/:id',
       if (!errors.isEmpty()) {
         return res.status(400).json({
           success: false,
-          errors: errors.array()
+          errors: errors.array(),
         });
       }
 
       const updateData = { ...req.body };
-      
+
       // Verify course field exists if updating
       if (updateData.courseFieldId) {
         const fieldExists = await prisma.courseField.findUnique({
-          where: { id: parseInt(updateData.courseFieldId) }
+          where: { id: parseInt(updateData.courseFieldId) },
         });
 
         if (!fieldExists) {
           return res.status(400).json({
             success: false,
-            message: 'Invalid course field ID. Field does not exist.'
+            message: "Invalid course field ID. Field does not exist.",
           });
         }
         updateData.courseFieldId = parseInt(updateData.courseFieldId);
       }
-      
+
       if (updateData.courseStartDate) {
         updateData.courseStartDate = new Date(updateData.courseStartDate);
       }
-      
+
       if (updateData.courseEndDate) {
         updateData.courseEndDate = new Date(updateData.courseEndDate);
       }
-      
+
       if (updateData.numberOfBeneficiaries) {
-        updateData.numberOfBeneficiaries = parseInt(updateData.numberOfBeneficiaries);
+        updateData.numberOfBeneficiaries = parseInt(
+          updateData.numberOfBeneficiaries
+        );
       }
-      
+
       if (updateData.numberOfGraduates) {
         updateData.numberOfGraduates = parseInt(updateData.numberOfGraduates);
       }
-      
+
       if (updateData.courseDuration) {
         updateData.courseDuration = parseInt(updateData.courseDuration);
       }
-      
+
       if (updateData.courseHours) {
         updateData.courseHours = parseInt(updateData.courseHours);
       }
@@ -264,43 +287,42 @@ router.put('/:id',
         include: {
           courseField: true,
           images: true,
-          documents: true
-        }
+          documents: true,
+        },
       });
 
       res.json({
         success: true,
-        message: 'Course updated successfully',
-        data: course
+        message: "Course updated successfully",
+        data: course,
       });
-
     } catch (error) {
-      console.error('Update course error:', error);
-      
-      if (error.code === 'P2025') {
+      console.error("Update course error:", error);
+
+      if (error.code === "P2025") {
         return res.status(404).json({
           success: false,
-          message: 'Course not found'
+          message: "Course not found",
         });
       }
-      
-      if (error.code === 'P2002') {
+
+      if (error.code === "P2002") {
         return res.status(400).json({
           success: false,
-          message: 'Course number already exists'
+          message: "Course number already exists",
         });
       }
-      
+
       res.status(500).json({
         success: false,
-        message: 'Error updating course'
+        message: "Error updating course",
       });
     }
   }
 );
 
 // Delete course
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     // Get course with files to delete them
     const course = await prisma.course.findUnique({
@@ -308,290 +330,278 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       include: {
         courseField: true,
         images: true,
-        documents: true
-      }
+        documents: true,
+      },
     });
 
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found'
+        message: "Course not found",
       });
     }
 
-    // Delete associated files
-    course.images.forEach(image => {
-      const imagePath = path.join(__dirname, '..', image.url);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
-    });
+    // Safely delete associated files (images & documents)
+    const deleteIfSafe = async (fileUrlOrPath) => {
+      if (!fileUrlOrPath) return;
+      const diskPath = urlToDiskPath(fileUrlOrPath);
+      const resolved = path.resolve(diskPath);
 
-    course.documents.forEach(doc => {
-      const docPath = path.join(__dirname, '..', doc.path);
-      if (fs.existsSync(docPath)) {
-        fs.unlinkSync(docPath);
+      // Prevent accidental deletion outside uploads root
+      if (!resolved.startsWith(UPLOADS_ROOT)) {
+      console.warn(`Skipping deletion outside uploads root: ${resolved}`);
+      return;
       }
-    });
+
+      try {
+      await fs.promises.unlink(resolved);
+      } catch (err) {
+      // Ignore missing files, log other errors
+      if (err.code !== "ENOENT") {
+        console.error("Failed to delete file:", resolved, err);
+      }
+      }
+    };
+
+    await Promise.allSettled([
+      ...(course.images || []).map((img) => deleteIfSafe(img.url)),
+      ...(course.documents || []).map((doc) => deleteIfSafe(doc.path)),
+    ]);
 
     // Delete course (cascades to images and documents)
     await prisma.course.delete({
-      where: { id: parseInt(req.params.id) }
+      where: { id: parseInt(req.params.id) },
     });
 
     res.json({
       success: true,
-      message: 'Course deleted successfully'
+      message: "Course deleted successfully",
     });
-
   } catch (error) {
-    console.error('Delete course error:', error);
+    console.error("Delete course error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error deleting course'
+      message: "Error deleting course",
     });
   }
 });
 
 // Upload course images
-router.post('/:id/images',
+router.post(
+  "/:id/images",
   authMiddleware,
-  uploadImage.array('images', 10),
+  uploadImage.array("images", 10),
   async (req, res) => {
     try {
       const courseId = parseInt(req.params.id);
 
       // Verify course exists
       const course = await prisma.course.findUnique({
-        where: { id: courseId }
+        where: { id: courseId },
       });
+      if (!req.files || req.files.length === 0) {
+        return res
+          .status(400)
+          .json({ success: false, message: "No files uploaded" });
+      }
 
       if (!course) {
         // Delete uploaded files
-        req.files.forEach(file => fs.unlinkSync(file.path));
-        
+        req.files.forEach((file) => fs.unlinkSync(file.path));
+
         return res.status(404).json({
           success: false,
-          message: 'Course not found'
+          message: "Course not found",
         });
       }
 
       // Create image records
       const images = await Promise.all(
-        req.files.map(file =>
+        req.files.map((file) =>
           prisma.courseImage.create({
             data: {
               courseId,
               url: `/uploads/images/${file.filename}`,
-              altText: req.body.altText || file.originalname
-            }
+              altText: req.body.altText || file.originalname,
+            },
           })
         )
       );
 
       res.status(201).json({
         success: true,
-        message: 'Images uploaded successfully',
-        data: images
+        message: "Images uploaded successfully",
+        data: images,
       });
-
     } catch (error) {
-      console.error('Upload images error:', error);
-      
+      console.error("Upload images error:", error);
+
       // Clean up uploaded files on error
       if (req.files) {
-        req.files.forEach(file => {
+        req.files.forEach((file) => {
           if (fs.existsSync(file.path)) {
             fs.unlinkSync(file.path);
           }
         });
       }
-      
+
       res.status(500).json({
         success: false,
-        message: 'Error uploading images'
+        message: "Error uploading images",
       });
     }
   }
 );
 
 // Delete course image
-router.delete('/:id/images/:imageId', authMiddleware, async (req, res) => {
+router.delete("/:id/images/:imageId", authMiddleware, async (req, res) => {
   try {
     const image = await prisma.courseImage.findUnique({
-      where: { id: parseInt(req.params.imageId) }
+      where: { id: parseInt(req.params.imageId) },
     });
 
     if (!image) {
       return res.status(404).json({
         success: false,
-        message: 'Image not found'
+        message: "Image not found",
       });
     }
 
     // Delete file
-    const imagePath = path.join(__dirname, '..', 'storage', image.url.replace('/uploads/', ''));
+    const imagePath = urlToDiskPath(image.url);
     if (fs.existsSync(imagePath)) {
       fs.unlinkSync(imagePath);
     }
 
     // Delete record
     await prisma.courseImage.delete({
-      where: { id: parseInt(req.params.imageId) }
+      where: { id: parseInt(req.params.imageId) },
     });
 
     res.json({
       success: true,
-      message: 'Image deleted successfully'
+      message: "Image deleted successfully",
     });
-
   } catch (error) {
-    console.error('Delete image error:', error);
+    console.error("Delete image error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error deleting image'
+      message: "Error deleting image",
     });
   }
 });
 
 // Upload course document
-router.post('/:id/documents',
+router.post(
+  "/:id/documents",
   authMiddleware,
-  uploadDocument.single('document'),
+  uploadDocument.single("document"),
   [
-    body('type').isIn([
-      'TRAINEES_DATA_FORM',
-      'TRAINER_DATA_FORM',
-      'ATTENDANCE_FORM',
-      'GENERAL_REPORT_FORM',
-      'COURSE_CERTIFICATE'
-    ]).withMessage('Invalid document type')
+    body("type")
+      .isIn([
+        "TRAINEES_DATA_FORM",
+        "TRAINER_DATA_FORM",
+        "ATTENDANCE_FORM",
+        "GENERAL_REPORT_FORM",
+        "COURSE_CERTIFICATE",
+      ])
+      .withMessage("Invalid document type"),
   ],
   async (req, res) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        if (req.file) fs.unlinkSync(req.file.path);
-        return res.status(400).json({
-          success: false,
-          errors: errors.array()
-        });
+        if (req.file && fs.existsSync(req.file.path))
+          fs.unlinkSync(req.file.path);
+        return res.status(400).json({ success: false, errors: errors.array() });
       }
 
-      const courseId = parseInt(req.params.id);
+      // ensure a file was actually uploaded
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ success: false, message: "No document file uploaded" });
+      }
+
+      const courseId = parseInt(req.params.id, 10);
 
       // Verify course exists
       const course = await prisma.course.findUnique({
-        where: { id: courseId }
+        where: { id: courseId },
       });
-
       if (!course) {
-        if (req.file) fs.unlinkSync(req.file.path);
-        return res.status(404).json({
-          success: false,
-          message: 'Course not found'
-        });
+        fs.existsSync(req.file.path) && fs.unlinkSync(req.file.path);
+        return res
+          .status(404)
+          .json({ success: false, message: "Course not found" });
       }
 
-      // Check if document of this type already exists
-      const existing = await prisma.courseDocument.findFirst({
-        where: {
-          courseId,
-          type: req.body.type
-        }
-      });
-
-      if (existing) {
-        // Delete old file
-        const oldPath = path.join(__dirname, '..', 'storage', existing.path.replace('/uploads/', ''));
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
-        }
-        
-        // Update existing document
-        const document = await prisma.courseDocument.update({
-          where: { id: existing.id },
-          data: {
-            path: `/uploads/documents/${req.file.filename}`,
-            fileName: req.file.originalname
-          }
-        });
-
-        return res.json({
-          success: true,
-          message: 'Document updated successfully',
-          data: document
-        });
-      }
-
-      // Create new document record
+      // ✅ Always create a new record; allow multiple docs per (courseId, type)
       const document = await prisma.courseDocument.create({
         data: {
           courseId,
           type: req.body.type,
           path: `/uploads/documents/${req.file.filename}`,
-          fileName: req.file.originalname
-        }
+          fileName: req.file.originalname,
+        },
       });
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
-        message: 'Document uploaded successfully',
-        data: document
+        message: "Document uploaded successfully",
+        data: document,
       });
-
     } catch (error) {
-      console.error('Upload document error:', error);
-      
-      if (req.file && fs.existsSync(req.file.path)) {
+      console.error("Upload document error:", error);
+      if (req.file && fs.existsSync(req.file.path))
         fs.unlinkSync(req.file.path);
-      }
-      
-      res.status(500).json({
-        success: false,
-        message: 'Error uploading document'
-      });
+      return res
+        .status(500)
+        .json({ success: false, message: "Error uploading document" });
     }
   }
 );
 
 // Delete course document
-router.delete('/:id/documents/:documentId', authMiddleware, async (req, res) => {
-  try {
-    const document = await prisma.courseDocument.findUnique({
-      where: { id: parseInt(req.params.documentId) }
-    });
+router.delete(
+  "/:id/documents/:documentId",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const document = await prisma.courseDocument.findUnique({
+        where: { id: parseInt(req.params.documentId) },
+      });
 
-    if (!document) {
-      return res.status(404).json({
+      if (!document) {
+        return res.status(404).json({
+          success: false,
+          message: "Document not found",
+        });
+      }
+
+      // Delete file
+      const docPath = urlToDiskPath(document.path);
+      if (fs.existsSync(docPath)) {
+        fs.unlinkSync(docPath);
+      }
+
+      // Delete record
+      await prisma.courseDocument.delete({
+        where: { id: parseInt(req.params.documentId) },
+      });
+
+      res.json({
+        success: true,
+        message: "Document deleted successfully",
+      });
+    } catch (error) {
+      console.error("Delete document error:", error);
+      res.status(500).json({
         success: false,
-        message: 'Document not found'
+        message: "Error deleting document",
       });
     }
-
-    // Delete file
-    const docPath = path.join(__dirname, '..', 'storage', document.path.replace('/uploads/', ''));
-    if (fs.existsSync(docPath)) {
-      fs.unlinkSync(docPath);
-    }
-
-    // Delete record
-    await prisma.courseDocument.delete({
-      where: { id: parseInt(req.params.documentId) }
-    });
-
-    res.json({
-      success: true,
-      message: 'Document deleted successfully'
-    });
-
-  } catch (error) {
-    console.error('Delete document error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting document'
-    });
   }
-});
+);
 
 module.exports = router;

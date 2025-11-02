@@ -1,25 +1,17 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { isAuthenticated } from "@/lib/auth";
+import { useContext } from "react";
+import { Navigate } from "react-router-dom";
+import AuthContext from "@/context/AuthContext";
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-}
+ interface ProtectedRouteProps {
+   children: React.ReactNode;
+ }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const navigate = useNavigate();
+ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      navigate("/login");
-    }
-  }, [navigate]);
-
-  if (!isAuthenticated()) {
-    return null;
-  }
-
+  const { isAuthenticated, loading } = useContext(AuthContext);
+  if (loading) return null;                    // optional: show a spinner
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
-};
+ };
 
-export default ProtectedRoute;
+ export default ProtectedRoute;

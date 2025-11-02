@@ -13,6 +13,8 @@ router.post(
   "/login",
   [body("password").notEmpty().withMessage("Password is required")],
   async (req, res) => {
+    console.log(req.body);
+    
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -25,6 +27,8 @@ router.post(
       const user = await prisma.user.findFirst({
         select: { id: true, password: true }, // least-privilege read
       }); // returns null if none exists
+      console.log(user);
+      
       if (!user) {
         return res.status(401).json({
           success: false,
@@ -34,6 +38,7 @@ router.post(
 
       // Compare plaintext password to stored bcrypt hash
       const isMatch = await bcrypt.compare(password, user.password);
+      // const isMatch = password === user.password; // TEMPORARY: remove bcrypt for initial setup ease
       if (!isMatch) {
         return res
           .status(401)
@@ -71,75 +76,51 @@ router.post(
 // Change password
 router.post(
   "/change-password",
-  authMiddleware,
   [
-    body("oldPassword").notEmpty().withMessage("Old password is required"),
+    body(["key", "oldPassword"])
+      .custom((value, { req }) => {
+        // allow either 'key' or 'oldPassword' (UI sends 'oldPassword' as the key)
+        return Boolean(value || req.body.key || req.body.oldPassword);
+      })
+      .withMessage("Authorization key is required"),
     body("newPassword")
-      .notEmpty()
-      .withMessage("New password is required")
-      .isLength({ min: 6 })
-      .withMessage("New password must be at least 6 characters"),
-    body("key").notEmpty().withMessage("Authorization key is required"),
+      .notEmpty().withMessage("New password is required")
+      .isLength({ min: 8 }).withMessage("New password must be at least 8 characters"),
   ],
   async (req, res) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          errors: errors.array(),
-        });
+        return res.status(400).json({ success: false, errors: errors.array() });
       }
 
-      const { oldPassword, newPassword, key } = req.body;
+      const providedKey = (req.body.key ?? req.body.oldPassword ?? "").trim();
+      const { newPassword } = req.body;
 
-      // Verify authorization key
-      if (key !== process.env.PASSWORD_CHANGE_KEY) {
-        return res.status(403).json({
-          success: false,
-          message: "Invalid authorization key",
-        });
-      }
-
-      // Get user from database
-     const user = await prisma.user.findUnique({
-   where: { id: req.user.id },             // use the authenticated subject
-   select: { id: true, password: true }
+      // Fetch the (only) admin user
+      const user = await prisma.user.findFirst({
+        select: { id: true, changePasswordKey: true },
       });
       if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found",
-        });
+        return res.status(404).json({ success: false, message: "User not found" });
       }
 
-      // Verify old password
-      const isMatch = await bcrypt.compare(oldPassword, user.password);
-      if (!isMatch) {
-        return res.status(401).json({
-          success: false,
-          message: "Old password is incorrect",
-        });
+      // Compare the provided key with the stored changePasswordKey
+      if (!user.changePasswordKey || providedKey !== user.changePasswordKey) {
+        return res.status(403).json({ success: false, message: "Invalid authorization key" });
       }
 
       // Hash and update new password
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
       await prisma.user.update({
         where: { id: user.id },
         data: { password: hashedPassword },
       });
 
-      res.json({
-        success: true,
-        message: "Password changed successfully",
-      });
+      return res.json({ success: true, message: "Password changed successfully" });
     } catch (error) {
       console.error("Change password error:", error);
-      res.status(500).json({
-        success: false,
-        message: "Server error during password change",
-      });
+      return res.status(500).json({ success: false, message: "Server error during password change" });
     }
   }
 );

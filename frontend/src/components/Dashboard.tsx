@@ -1,25 +1,67 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BookOpen, Users, Clock, Plus, Search } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
 import { CourseTable } from "./CourseTable";
-import { mockCourses } from "@/lib/mockData";
 import { useNavigate } from "react-router-dom";
+import { listCourses } from "@/services/courses";
+import { getDashboardStats } from "@/services/stats";
+import { toast } from "@/components/ui/sonner";
 
 export const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [courses, setCourses] = useState([]);
+  const [stats, setStats] = useState({
+    totalCourses: 0,
+    totalGraduates: 0,
+    totalHours: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  
   const navigate = useNavigate();
 
-  const totalCourses = mockCourses.length;
-  const totalGraduates = mockCourses.reduce((sum, course) => sum + course.numberOfGraduates, 0);
-  const totalHours = mockCourses.reduce((sum, course) => sum + course.courseHours, 0);
+  // Fetch dashboard stats
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getDashboardStats();
+        setStats(data.overview);
+      } catch (err) {
+        console.error("Failed to load stats:", err);
+      }
+    })();
+  }, []);
 
-  const filteredCourses = mockCourses.filter(course =>
-    course.courseName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    course.courseNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    course.trainerName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Fetch courses
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const response = await listCourses({
+          page,
+          limit: 10,
+          search: searchQuery,
+        });
+        setCourses(response.data);
+        setTotalPages(response.pagination.totalPages);
+      } catch (err) {
+        toast.error("فشل تحميل الدورات");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [page, searchQuery]);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPage(1); // Reset to first page on new search
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -31,7 +73,7 @@ export const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">إجمالي الدورات</p>
-              <p className="text-3xl font-bold text-foreground">{totalCourses}</p>
+              <p className="text-3xl font-bold text-foreground">{stats.totalCourses}</p>
             </div>
           </div>
         </Card>
@@ -43,7 +85,7 @@ export const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">إجمالي الخريجين</p>
-              <p className="text-3xl font-bold text-foreground">{totalGraduates}</p>
+              <p className="text-3xl font-bold text-foreground">{stats.totalGraduates}</p>
             </div>
           </div>
         </Card>
@@ -55,7 +97,7 @@ export const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">إجمالي الساعات</p>
-              <p className="text-3xl font-bold text-foreground">{totalHours}</p>
+              <p className="text-3xl font-bold text-foreground">{stats.totalHours}</p>
             </div>
           </div>
         </Card>
@@ -82,7 +124,35 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        <CourseTable courses={filteredCourses} />
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">جاري التحميل...</div>
+        ) : (
+          <>
+            <CourseTable courses={courses} />
+            
+            {totalPages > 1 && (
+              <div className="mt-6 flex justify-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  السابق
+                </Button>
+                <span className="flex items-center px-4">
+                  صفحة {page} من {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                >
+                  التالي
+                </Button>
+              </div>
+            )}
+          </>
+        )}
       </Card>
     </div>
   );

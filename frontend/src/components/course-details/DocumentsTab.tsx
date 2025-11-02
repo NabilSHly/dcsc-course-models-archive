@@ -1,28 +1,65 @@
 import { useState } from "react";
 import { FileText, Download, Eye } from "lucide-react";
-import type { Course } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { getDocumentTypeName } from "@/lib/mockData";
+
+interface Document {
+  id: number;
+  type: string;
+  fileName?: string;
+  path: string;
+}
+
+interface Course {
+  documents: Document[];
+}
 
 interface DocumentsTabProps {
   course: Course;
 }
 
+const getDocumentTypeName = (type: string): string => {
+  const names: Record<string, string> = {
+    TRAINEES_DATA_FORM: "نموذج بيانات المتدربين",
+    TRAINER_DATA_FORM: "نموذج بيانات المدرب",
+    ATTENDANCE_FORM: "نموذج الحضور",
+    GENERAL_REPORT_FORM: "نموذج التقرير العام للدورة التدريبية",
+    COURSE_CERTIFICATE: "شهائد الدورة التدريبية"
+  };
+  return names[type] || type;
+};
+
 export const DocumentsTab = ({ course }: DocumentsTabProps) => {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   
   // Group documents by type
-  const documentsByType = course.documents.reduce((acc, doc) => {
+  const documentsByType = (course.documents || []).reduce((acc, doc) => {
     if (!acc[doc.type]) {
       acc[doc.type] = [];
     }
     acc[doc.type].push(doc);
     return acc;
-  }, {} as Record<string, typeof course.documents>);
+  }, {} as Record<string, Document[]>);
 
   const documentTypes = Object.keys(documentsByType);
+
+  const getDocumentUrl = (path: string) => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const baseUrl = apiUrl.replace('/api', '');
+    return `${baseUrl}${path}`;
+  };
+
+  const handleDownload = (doc: Document) => {
+    const url = getDocumentUrl(doc.path);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = doc.fileName || 'document.pdf';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="space-y-4 pt-6">
@@ -67,16 +104,15 @@ export const DocumentsTab = ({ course }: DocumentsTabProps) => {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3 flex-1 min-w-0">
                               <FileText className="h-5 w-5 text-primary flex-shrink-0" />
-                              <p className="text-sm text-foreground truncate">{doc.fileName}</p>
+                              <p className="text-sm text-foreground truncate">
+                                {doc.fileName || 'مستند'}
+                              </p>
                             </div>
                             <Button 
                               variant="ghost" 
                               size="sm" 
                               className="gap-2 flex-shrink-0"
-                              onClick={() => {
-                                // In a real app, this would download the file
-                                console.log('Downloading:', doc.path);
-                              }}
+                              onClick={() => handleDownload(doc)}
                             >
                               <Download className="h-4 w-4" />
                               تحميل

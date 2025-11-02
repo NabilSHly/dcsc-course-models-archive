@@ -1,6 +1,22 @@
 import { Calendar, MapPin, Clock, Code, User, Phone, Users, Award } from "lucide-react";
-import type { Course } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
+
+interface Course {
+  courseNumber: string;
+  courseCode: string;
+  courseField: { id: number; name: string };
+  courseName: string;
+  courseVenue: string;
+  courseStartDate: string;
+  courseEndDate: string;
+  courseDuration: number;
+  courseHours: number;
+  trainerName: string;
+  trainerPhoneNumber: string;
+  numberOfBeneficiaries: number;
+  numberOfGraduates: number;
+  notes?: string;
+}
 
 interface OverviewTabProps {
   course: Course;
@@ -12,17 +28,18 @@ export const OverviewTab = ({ course }: OverviewTabProps) => {
       year: 'numeric',
       month: 'numeric',
       day: 'numeric',
-
     });
   };
 
-  const completionRate = ((course.numberOfGraduates / course.numberOfBeneficiaries) * 100).toFixed(1);
+  const completionRate = course.numberOfBeneficiaries > 0
+    ? ((course.numberOfGraduates / course.numberOfBeneficiaries) * 100).toFixed(1)
+    : "0.0";
 
   return (
     <div className="space-y-6 pt-6">
       {/* Course Information Section */}
       <div>
-        <h3 className="mb-4 text-lg font-semibold text-foreground">معلومات الدورة التدريبية</h3>
+        <h3 className="mb-4 text-lg font-semibold text-foreground text-center">معلومات الدورة التدريبية</h3>
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">كود الدورة التدريبية</label>
@@ -35,7 +52,7 @@ export const OverviewTab = ({ course }: OverviewTabProps) => {
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">المجال</label>
             <div className="rounded-md bg-secondary/10 px-3 py-2 text-secondary">
-              {course.courseField}
+              {course.courseField?.name || 'غير محدد'}
             </div>
           </div>
 
@@ -75,7 +92,7 @@ export const OverviewTab = ({ course }: OverviewTabProps) => {
         {course.notes && (
           <div className="mt-6 space-y-2">
             <label className="text-sm font-medium text-muted-foreground">ملاحظات</label>
-            <div className="rounded-md border bg-muted/50 p-4 text-foreground">
+            <div className="rounded-md border bg-muted/50 p-4 text-foreground whitespace-pre-wrap">
               {course.notes}
             </div>
           </div>
@@ -139,7 +156,20 @@ export const OverviewTab = ({ course }: OverviewTabProps) => {
             </Card>
           </div>
 
-         
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">نسبة الإتمام</p>
+                <p className="text-2xl font-bold text-foreground">{completionRate}%</p>
+              </div>
+              <div className="h-2 flex-1 mx-6 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all"
+                  style={{ width: `${completionRate}%` }}
+                />
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     </div>

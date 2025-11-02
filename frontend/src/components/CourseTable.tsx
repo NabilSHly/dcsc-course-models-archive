@@ -3,13 +3,23 @@ import { Eye } from "lucide-react";
 import { Button } from "./ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Badge } from "./ui/badge";
-import type { Course } from "@/lib/mockData";
+
+interface Course {
+  id: number;
+  courseNumber: string;
+  courseName: string;
+  courseField: { id: number; name: string };
+  trainerName: string;
+  courseStartDate: string;
+  numberOfGraduates: number;
+  numberOfBeneficiaries: number;
+}
 
 interface CourseTableProps {
   courses: Course[];
 }
 
-export const CourseTable = ({ courses }: CourseTableProps) => {
+export const CourseTable = ({ courses = [] }: CourseTableProps) => {
   const navigate = useNavigate();
 
   const formatDate = (dateString: string) => {
@@ -25,17 +35,17 @@ export const CourseTable = ({ courses }: CourseTableProps) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>رقم الدورة التدريبية</TableHead>
-            <TableHead>اسم الدورة التدريبية</TableHead>
-            <TableHead>المجال</TableHead>
-            <TableHead>المدرب</TableHead>
-            <TableHead>تاريخ البدء</TableHead>
-            <TableHead>الخريجون</TableHead>
+            <TableHead className="text-start">رقم الدورة التدريبية</TableHead>
+            <TableHead className="text-start">اسم الدورة التدريبية</TableHead>
+            <TableHead className="text-start">المجال</TableHead>
+            <TableHead className="text-start">المدرب</TableHead>
+            <TableHead className="text-start">تاريخ البدء</TableHead>
+            <TableHead className="text-start">الخريجون</TableHead>
             <TableHead className="text-right">الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {courses.length === 0 ? (
+          {!Array.isArray(courses) || courses.length === 0 ? (
             <TableRow>
               <TableCell colSpan={7} className="text-center text-muted-foreground">
                 لم يتم العثور على دورات
@@ -47,7 +57,9 @@ export const CourseTable = ({ courses }: CourseTableProps) => {
                 <TableCell className="font-medium">{course.courseNumber}</TableCell>
                 <TableCell>{course.courseName}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{course.courseField}</Badge>
+                  <Badge variant="secondary">
+                    {course.courseField?.name || 'غير محدد'}
+                  </Badge>
                 </TableCell>
                 <TableCell>{course.trainerName}</TableCell>
                 <TableCell>{formatDate(course.courseStartDate)}</TableCell>

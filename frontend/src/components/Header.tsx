@@ -3,11 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { logout } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { useContext } from "react";
+import AuthContext from "@/context/AuthContext";
+
 
 export const Header = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-
+  const { logout } = useContext(AuthContext);
   const handleLogout = () => {
     logout();
     toast({
@@ -33,9 +36,9 @@ export const Header = () => {
     </div>
           <div>
             <h1 className="text-xl font-bold text-foreground">
-              مركز دعم التنمية البلدية واللامركزية
+              مركز تطوير البلديات و دعم اللامركزية
             </h1>
-            <p className="text-sm text-muted-foreground">نظام إدارة الدورات التدريبية</p>
+            <p className="text-sm text-muted-foreground">نظام أرشفة و إدارة الدورات التدريبية</p>
           </div>
           </div>
           <div className="flex gap-2">

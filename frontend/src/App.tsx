@@ -10,10 +10,12 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { AuthProvider } from './context/AuthContext';
 
 const queryClient = new QueryClient();
 
 const App = () => (
+  <AuthProvider >
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -26,12 +28,13 @@ const App = () => (
           <Route path="/add-course" element={<ProtectedRoute><AddEditCourse /></ProtectedRoute>} />
           <Route path="/edit-course/:id" element={<ProtectedRoute><AddEditCourse /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
+  </AuthProvider>
+
 );
 
 export default App;
