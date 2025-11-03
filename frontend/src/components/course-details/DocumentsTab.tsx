@@ -1,8 +1,10 @@
+// frontend/src/components/course-details/DocumentsTab.tsx
 import { useState } from "react";
 import { FileText, Download, Eye } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { getAssetUrl } from "@/lib/assets";
 
 interface Document {
   id: number;
@@ -33,7 +35,6 @@ const getDocumentTypeName = (type: string): string => {
 export const DocumentsTab = ({ course }: DocumentsTabProps) => {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   
-  // Group documents by type
   const documentsByType = (course.documents || []).reduce((acc, doc) => {
     if (!acc[doc.type]) {
       acc[doc.type] = [];
@@ -44,14 +45,8 @@ export const DocumentsTab = ({ course }: DocumentsTabProps) => {
 
   const documentTypes = Object.keys(documentsByType);
 
-  const getDocumentUrl = (path: string) => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    const baseUrl = apiUrl.replace('/api', '');
-    return `${baseUrl}${path}`;
-  };
-
   const handleDownload = (doc: Document) => {
-    const url = getDocumentUrl(doc.path);
+    const url = getAssetUrl(doc.path);
     const link = document.createElement('a');
     link.href = url;
     link.download = doc.fileName || 'document.pdf';

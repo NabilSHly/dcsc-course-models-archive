@@ -454,31 +454,33 @@ const handleDeleteExistingDocument = async (documentId: number) => {
 
   {/* صور موجودة مسبقاً (وضع التعديل) */}
   {course && existingImages.length > 0 && (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
-      {existingImages.map((img) => (
-        <div key={img.id} className="relative group">
-          <div className="aspect-video rounded-lg bg-muted overflow-hidden">
-            <img
-              src={getAssetUrl(img.url)}
-              alt={img.altText || "صورة الدورة"}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon"
-            className="absolute top-2 left-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() => handleDeleteExistingImage(img.id)}
-            title="حذف"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
+    {existingImages.map((img) => (
+      <div key={img.id} className="relative group">
+        <div className="aspect-video rounded-lg bg-muted overflow-hidden">
+          <img
+            src={getAssetUrl(img.url)}
+            alt={img.altText || "صورة الدورة"}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YwZjBmMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgYXZhaWxhYmxlPC90ZXh0Pjwvc3ZnPg==';
+            }}
+          />
         </div>
-      ))}
-    </div>
-  )}
-
+        <Button
+          type="button"
+          variant="destructive"
+          size="icon"
+          className="absolute top-2 left-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={() => handleDeleteExistingImage(img.id)}
+          title="حذف"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    ))}
+  </div>
+)}
   {/* إضافة صور جديدة */}
   <Input
     type="file"

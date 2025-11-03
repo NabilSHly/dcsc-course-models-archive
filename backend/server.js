@@ -27,9 +27,22 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '1gb' }));
 app.use(express.urlencoded({ extended: true, limit: '1gb' }));
 
-// Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'storage', 'uploads')));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // allow <img> from other origins
+    crossOriginEmbedderPolicy: false,                      // avoid require-corp
+  })
+);
 
+// Serve /uploads exactly once, and attach CORP just for this route
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    next();
+  },
+  express.static(path.join(__dirname, "storage", "uploads"))
+);
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
