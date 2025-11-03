@@ -27,7 +27,6 @@ router.post(
       const user = await prisma.user.findFirst({
         select: { id: true, password: true }, // least-privilege read
       }); // returns null if none exists
-      console.log(user);
       
       if (!user) {
         return res.status(401).json({
@@ -37,6 +36,7 @@ router.post(
       }
 
       // Compare plaintext password to stored bcrypt hash
+      
       const isMatch = await bcrypt.compare(password, user.password);
       // const isMatch = password === user.password; // TEMPORARY: remove bcrypt for initial setup ease
       if (!isMatch) {
@@ -89,6 +89,7 @@ router.post(
   ],
   async (req, res) => {
     try {
+      
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ success: false, errors: errors.array() });

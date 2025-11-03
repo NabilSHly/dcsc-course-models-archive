@@ -114,8 +114,8 @@ export const DocumentsTab = ({ course }: DocumentsTabProps) => {
                               className="gap-2 flex-shrink-0"
                               onClick={() => handleDownload(doc)}
                             >
-                              <Download className="h-4 w-4" />
-                              تحميل
+                              <Eye className="h-4 w-4" />
+                              عرض
                             </Button>
                           </div>
                         </Card>
