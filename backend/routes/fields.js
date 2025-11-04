@@ -262,7 +262,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     if (courseCount > 0) {
       return res.status(400).json({
         success: false,
-        message: `Cannot delete field. It has ${courseCount} associated course(s). Please reassign or delete those courses first.`,
+        message: `لا يمكن حذف المجال. يحتوي على ${courseCount} دورة (دورات) مرتبطة به. يرجى إعادة تعيين أو حذف تلك الدورات أولاً.`,
         courseCount,
       });
     }

@@ -1,0 +1,9 @@
+# Ignore all PDF files
+*.pdf
+# Ignore all .env files
+.env
+# Ignore node_modules directory
+node_modules/
+# Ignore build output directories
+dist/
+build/

@@ -105,6 +105,17 @@ All colors MUST be HSL.
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
+@font-face {
+  font-family: "ElMessiri";
+  src: url("/fonts/ElMessiri-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+body {
+  font-family: "ElMessiri", sans-serif;
+}
 
 @layer base {
   * {
