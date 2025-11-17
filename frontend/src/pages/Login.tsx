@@ -1,67 +1,91 @@
-import { useContext, useState } from "react";
-import { useNavigate } from "react-router-dom";
+'use client'
+
+import { useContext, useState, FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff } from "lucide-react";
-import  AuthContext  from "@/context/AuthContext";
+import { Eye, EyeOff } from 'lucide-react';
+import AuthContext from "@/context/AuthContext";
 import api from "@/services/api";
 
-const Login = () => {
+export default function Login() {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const { login } = useContext(AuthContext);
-  const navigate = useNavigate();
   const { toast } = useToast();
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  const trimmed = password.trim();
-  if (!trimmed) return;             // avoid empty/whitespace submit
-  setIsLoading(true);
-  try {
-    const res = await api.post("/auth/login", { password: trimmed });
-    if (res?.data?.success && res?.data?.token) {
-      const ok = login(res.data.token);   // pass only the token
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-      if (ok) {
-        toast({ title: "تم تسجيل الدخول", description: "تم تسجيل الدخول بنجاح." });
-        navigate("/");
+    if (isLoading) return;
+
+    const trimmed = password.trim();
+    if (!trimmed) return;
+
+    setIsLoading(true);
+
+    try {
+      const res = await api.post("/auth/login", { password: trimmed });
+
+      if (res?.data?.success && res?.data?.token) {
+        const ok = login(res.data.token);
+
+        if (ok) {
+          toast({
+            title: "تم تسجيل الدخول",
+            description: "تم تسجيل الدخول بنجاح.",
+          });
+          window.location.href = "/";
+        } else {
+          toast({
+            title: "فشل تسجيل الدخول",
+            description: "انتهت صلاحية التذكرة أو غير صالحة.",
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: "فشل تسجيل الدخول",
-          description: "انتهت صلاحية التذكرة أو غير صالحة.",
+          description:
+            res?.data?.message || "كلمة المرور غير صحيحة. حاول مرة أخرى.",
           variant: "destructive",
         });
       }
-    } else {
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const message =
+        error.response?.data?.message ||
+        "حدث خطأ أثناء محاولة تسجيل الدخول. حاول مرة أخرى.";
+
       toast({
         title: "فشل تسجيل الدخول",
-        description: res?.data?.message || "كلمة المرور غير صحيحة. حاول مرة أخرى.",
+        description: message,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-  } catch (err: unknown) {
-    const message =
-      (err as any)?.response?.data?.message ??
-      "حدث خطأ أثناء محاولة تسجيل الدخول. حاول مرة أخرى.";
-    toast({ title: "فشل تسجيل الدخول", description: message, variant: "destructive" });
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 
   return (
-    <div dir="rtl" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted p-4">
+    <div
+      dir="rtl"
+      className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-muted p-4"
+    >
       <Card className="w-full max-w-md">
-        <CardHeader dir="rtl" className="mx-auto max-w-2xl space-y-4">
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:justify-between">
-            <div className="relative h-16 w-16 shrink-0 rounded-full bg-primary/10 p-2 sm:h-20 sm:w-20">
+        <CardHeader dir="rtl" className="space-y-6 pb-6">
+          <div className="flex items-center justify-center gap-4">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 p-3 shadow-sm transition-transform hover:scale-105 sm:h-24 sm:w-24">
               <img
                 src="/cropped-log1o.png"
                 alt="شعار مركز تطوير البلديات ودعم اللامركزية"
@@ -70,18 +94,38 @@ const Login = () => {
                 decoding="async"
               />
             </div>
-            <div className="min-w-0 text-center sm:flex-1 sm:text-right">
-              <CardTitle className="font-semibold leading-tight">نظام أرشفة النماذج التدريبية</CardTitle>
-              <div className="mt-1 text-lg text-primary sm:text-xl">مركز تطوير البلديات و دعم اللامركزية</div>
+
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 p-3 shadow-sm transition-transform hover:scale-105 sm:h-24 sm:w-24">
+              <img
+                src="/Untitled-1.png"
+                alt="شعار تطوير"
+                className="h-full w-full object-contain"
+                loading="lazy"
+                decoding="async"
+              />
             </div>
           </div>
-          <CardDescription className="text-center text-muted-foreground sm:text-right">
-            أدخل كلمة المرور للدخول إلى النظام
-          </CardDescription>
+
+          <div className="space-y-3 text-center">
+            <CardTitle className="text-balance text-2xl font-bold leading-tight sm:text-3xl">
+              نظام أرشفة النماذج التدريبية
+            </CardTitle>
+            <p className="text-base font-medium text-primary sm:text-lg">
+              مركز تطوير البلديات و دعم اللامركزية
+            </p>
+            <CardDescription className="text-sm text-muted-foreground sm:text-base">
+              أدخل كلمة المرور للدخول إلى النظام
+            </CardDescription>
+          </div>
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4" aria-busy={isLoading} autoComplete="on">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+            aria-busy={isLoading}
+            autoComplete="on"
+          >
             <div className="space-y-2">
               <Label htmlFor="password">كلمة المرور</Label>
               <div className="relative">
@@ -111,7 +155,11 @@ const Login = () => {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading || !password.trim()}
+            >
               {isLoading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
             </Button>
           </form>
@@ -119,6 +167,4 @@ const Login = () => {
       </Card>
     </div>
   );
-};
-
-export default Login;
+}

@@ -25,6 +25,16 @@ export const Header = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
+            <div className="relative h-16 w-16 shrink-0 rounded-full bg-primary/10 p-1 ">
+                <img
+                  src="/Untitled-1.png"
+                  alt="شعار تطوير"
+                         className="h-full w-full object-contain"
+
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
            <div className="relative h-16 w-16 shrink-0 rounded-full bg-primary/10 p-1 ">
       <img
         src="/cropped-log1o.png"
@@ -33,7 +43,9 @@ export const Header = () => {
         loading="lazy"
         decoding="async"
       />
+       
     </div>
+    
           <div>
             <h1 className="text-xl font-bold text-foreground">
               مركز تطوير البلديات و دعم اللامركزية
