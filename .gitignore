@@ -3,6 +3,8 @@
 # Ignore all .env files
 .env
 # Ignore node_modules directory
+backend/node_modules/
+frontend/node_modules/
 node_modules/
 # Ignore build output directories
 dist/
